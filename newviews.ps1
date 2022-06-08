@@ -3,24 +3,43 @@ class CohesityCluster
 {
     [String]$ClusterFQDN
     
-    [String]Cluster-Auth([credential]$Cred, [string]$FQDN){
-        $Auth-URL = $FQDN + "/irisservices/api/v1/public/accessTokens"
+    [String]ClusterAuth([PSCredential]$Cred, [string]$FQDN){
+        $AuthURL = "https://" + $FQDN + "/irisservices/api/v1/public/accessTokens"
+        $ContentType = "application/json"
+        
         $Header = @{
-            'Authorization' = "Bearer AccessToken",
-            'Accept' = "application/json",
-            'Content-Type' = "application/json"
+            "Accept" = $ContentType
+            "Content-Type" = $ContentType
             }
 
-
-        # Invoke-RestMethod -Method 'Post' -Header $Header -URL $Auth-URL -credential $Cred
-        return $Token
+        $Body = @{
+            "username" = $Cred.username
+            "password" = $Cred.GetNetworkCredential().password
+        }
+        $Token = Invoke-RestMethod -Method 'Post' -URI $AuthURL -Header $Header -Body ($Body | ConvertTo-Json) -SkipCertificateCheck
+        return $Token.accessToken
     }
 }
 
-class CreateView 
+class CohesityView 
 {
     [String]$ViewName
     [INT]$Increment
+
+    [Void]CreateView([String]$BearerToken, [String]$FQDN)
+    {
+        $SDURL = "https://" + $FQDN + "/irisservices/api/v1/public/views"
+        $ContentType = "application/json"
+        
+        $Header = @{
+            "Authorization" = "Bearer $BearerToken"
+            "Accept" = $ContentType
+            "Content-Type" = $ContentType
+            } 
+        
+        $Views = Invoke-RestMethod -Method 'Get' -URI $SDURL -Header $Header -SkipCertificateCheck
+        Write-Host $Views
+    }
 }
 
 Do
@@ -39,12 +58,20 @@ Do
         $Cluster.ClusterFQDN = $ClusterFQDN
         Write-Host "Please enter the Cluster credentials:" -ForegroundColor Green -BackgroundColor Black
         $Credential = Get-Credential
+
+        $ClusterToken = $Cluster.ClusterAuth($Credential, $ClusterFQDN )
     }
     if ($UserChoice -eq 2)
     {
         Write-Host "Enter the name you would like for the views:" -ForegroundColor Green -BackgroundColor Black
         $ViewName = Read-Host
-        Write-Host "Please enter the number of shares that you would like to create:"
+        Write-Host "Please enter the number of shares that you would like to create:" -ForegroundColor Green -BackgroundColor Black
+        $Increment = Read-Host
+
+        $View = New-Object CohesityView
+        $View.ViewName = $ViewName
+        $View.Increment = $Increment
+        $view.CreateView($ClusterToken, $ClusterFQDN)
     }
 } While ($UserChoice -ne 3)
 

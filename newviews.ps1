@@ -30,6 +30,7 @@ class CohesityView
     [String]$FQDN
     [String]$BearerToken
     [String]$StorageDomainName
+    [Int]$StorageDomainID
     [String]$ContentType = "application/json"
    
 
@@ -39,16 +40,23 @@ class CohesityView
             "Authorization" = "Bearer " + $This.BearerToken
             "Accept" = $This.ContentType
             "Content-Type" = $This.ContentType
-            } 
-        
+            }
+
         $CreateViewURL = "https://" + $This.FQDN + "/irisservices/api/v1/public/views"
+        For ($counter = 1; $counter -le $This.Increment; $counter++)
+        {
+        $Body = @{
+            "name" = $This.ViewName + "_" + $counter
+            "viewBoxId" = $This.StorageDomainID
+        }
         
-        $Views = Invoke-RestMethod -Method 'Get' -URI $CreateViewURL -Header $Header -SkipCertificateCheck
-        Write-Host $Views
+            $Views = Invoke-RestMethod -Method 'Post' -URI $CreateViewURL -Header $Header -Body ($Body | ConvertTo-Json) -SkipCertificateCheck
+            Write-Host $Views.name  "Created successfully" -ForegroundColor Green -BackgroundColor Black
+        }
     }
-    [Void]GetStorageDomain() 
+
+    [Int]GetStorageDomain() 
     {
-        
         $Header = @{
             "Authorization" = "Bearer " + $This.BearerToken
             "Accept" = $This.ContentType
@@ -56,25 +64,14 @@ class CohesityView
             } 
         $SDGetURL = "https://" + $This.FQDN + "/irisservices/api/v1/public/viewBoxes"
         $SDResponse = Invoke-RestMethod -Method 'Get' -URI $SDGetURL -Header $Header -SkipCertificateCheck  
-        # $test | ConvertTo-Json -Depth 99
-        # foreach($SD in $printer)
-        # {
-            # if ($SD.name = "test")
-            # write-host $SD.name
-        
         $SD = $SDResponse | where-object name -eq $This.StorageDomainName
-        write-host $SD.id
-        
-        
-        
-
-        # foreach($print in $printer | Where-Object name -eq test)
+        Return $SD.id
     }
 }
 
 Do
 {
-    Write-Host "Select an option: 
+    Write-Host "Select an option 1 through 3: 
     `n Enter 1 to authenticate to the Cohesity cluster.
     `n Enter 2 to create the new Cohesity Views.
     `n Enter 3 to exit this application." -ForegroundColor Green -BackgroundColor Black
@@ -91,11 +88,12 @@ Do
 
         $ClusterToken = $Cluster.ClusterAuth()
     }
-    if ($UserChoice -eq 2)
+    elseif ($UserChoice -eq 2)
     {        
         $View = New-Object CohesityView
         $View.BearerToken = $ClusterToken
         $View.FQDN = $ClusterFQDN
+
         Write-Host "Enter the name you would like for the views:" -ForegroundColor Green -BackgroundColor Black
         $View.ViewName  = Read-Host
         Write-Host "Enter the number of views that you would like to create:" -ForegroundColor Green -BackgroundColor Black
@@ -103,11 +101,11 @@ Do
         Write-Host "Enter the storage domain to create the views on:" -ForegroundColor Green -BackgroundColor Black
         $View.StorageDomainName = Read-Host
         
-        $View.GetStorageDomain()
+        $View.StorageDomainID = $View.GetStorageDomain()
+        $View.CreateView()
+    }
+    else
+    {
+        Write-Host "You have made an invalid selection.  Choose options 1 through 3 only."
     }
 } While ($UserChoice -ne 3)
-
-
-
-
-

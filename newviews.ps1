@@ -55,9 +55,20 @@ class CohesityView
             "Content-Type" = $This.ContentType
             } 
         $SDGetURL = "https://" + $This.FQDN + "/irisservices/api/v1/public/viewBoxes"
-        $StorageDomains = Invoke-RestMethod -Method 'Get' -URI $SDGetURL -Header $Header -SkipCertificateCheck
-        Write-Host $StorageDomains | Get-Members
+        $SDResponse = Invoke-RestMethod -Method 'Get' -URI $SDGetURL -Header $Header -SkipCertificateCheck  
+        # $test | ConvertTo-Json -Depth 99
+        # foreach($SD in $printer)
+        # {
+            # if ($SD.name = "test")
+            # write-host $SD.name
+        
+        $SD = $SDResponse | where-object name -eq $This.StorageDomainName
+        write-host $SD.id
+        
+        
+        
 
+        # foreach($print in $printer | Where-Object name -eq test)
     }
 }
 
@@ -81,17 +92,17 @@ Do
         $ClusterToken = $Cluster.ClusterAuth()
     }
     if ($UserChoice -eq 2)
-    {
+    {        
+        $View = New-Object CohesityView
+        $View.BearerToken = $ClusterToken
+        $View.FQDN = $ClusterFQDN
         Write-Host "Enter the name you would like for the views:" -ForegroundColor Green -BackgroundColor Black
         $View.ViewName  = Read-Host
         Write-Host "Enter the number of views that you would like to create:" -ForegroundColor Green -BackgroundColor Black
         $View.Increment = Read-Host
         Write-Host "Enter the storage domain to create the views on:" -ForegroundColor Green -BackgroundColor Black
         $View.StorageDomainName = Read-Host
-
-        $View = New-Object CohesityView
-        $View.BearerToken = $ClusterToken
-        $View.FQDN = $ClusterFQDN
+        
         $View.GetStorageDomain()
     }
 } While ($UserChoice -ne 3)

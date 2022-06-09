@@ -5,7 +5,7 @@ This app creates a user specified number of views using a user specified name pl
 1. Select Option 1 to choose enter a Cohesity cluster FQDN and to enter credentials to that cluster.
 2. Select Option 2 to enter the new Views base name, number of views to create, and storage domain to store the views on.
 
-```
+```powershell
 # Download Commands
 
 $scriptName = 'newviews.ps1’

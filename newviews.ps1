@@ -106,6 +106,6 @@ Do
     }
     else
     {
-        Write-Host "You have made an invalid selection.  Choose options 1 through 3 only."
+        Write-Host "You have made an invalid selection.  Choose options 1 through 3 only." -ForegroundColor Green -BackgroundColor Black
     }
 } While ($UserChoice -ne 3)

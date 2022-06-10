@@ -48,6 +48,11 @@ class CohesityView
         $Body = @{
             "name" = $This.ViewName + "_" + $counter
             "viewBoxId" = $This.StorageDomainID
+            "enableNfsViewDiscovery" = $true
+            "protocolAccess" = "kNFSOnly"
+            "qos" = @{
+                "principalName" = "TestAndDev High"
+            }
         }
         
             $Views = Invoke-RestMethod -Method 'Post' -URI $CreateViewURL -Header $Header -Body ($Body | ConvertTo-Json) -SkipCertificateCheck

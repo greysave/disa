@@ -81,7 +81,7 @@ class CohesityView
                 "principalName" = "TestAndDev High"
             }
         }
-        
+            Import-Csv -Path $This.CSVPath -Delimiter t
             $Views = Invoke-RestMethod -Method 'Post' -URI $CreateViewURL -Header $Header -Body ($Body | ConvertTo-Json) -SkipCertificateCheck
             Write-Host $Views.name  "Created successfully" -ForegroundColor Green -BackgroundColor Black
         } 

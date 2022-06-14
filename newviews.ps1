@@ -32,6 +32,7 @@ class CohesityView
     [String]$StorageDomainName
     [Int]$StorageDomainID
     [String]$ContentType = "application/json"
+    [String]$CSVPath
    
 
     [Void]CreateView()
@@ -60,6 +61,31 @@ class CohesityView
         }
     }
 
+    [Void]CreateListView()
+    {
+        $Header = @{
+            "Authorization" = "Bearer " + $This.BearerToken
+            "Accept" = $This.ContentType
+            "Content-Type" = $This.ContentType
+            }
+
+        $CreateViewURL = "https://" + $This.FQDN + "/irisservices/api/v1/public/views"
+        For ($counter = 1; $counter -le $This.Increment; $counter++)
+        {
+        $Body = @{
+            "name" = $This.ViewName + "_" + $counter
+            "viewBoxId" = $This.StorageDomainID
+            "enableNfsViewDiscovery" = $true
+            "protocolAccess" = "kNFSOnly"
+            "qos" = @{
+                "principalName" = "TestAndDev High"
+            }
+        }
+        
+            $Views = Invoke-RestMethod -Method 'Post' -URI $CreateViewURL -Header $Header -Body ($Body | ConvertTo-Json) -SkipCertificateCheck
+            Write-Host $Views.name  "Created successfully" -ForegroundColor Green -BackgroundColor Black
+        } 
+    }
     [Int]GetStorageDomain() 
     {
         $Header = @{
@@ -76,7 +102,7 @@ class CohesityView
 
 Do
 {
-    Write-Host "Select an option 1 through 3: 
+    Write-Host "Select an option 1 through 4: 
     `n Enter 1 to authenticate to the Cohesity cluster.
     `n Enter 2 to create the new Cohesity Views.
     `n Enter 3 to exit this application." -ForegroundColor Green -BackgroundColor Black
@@ -109,8 +135,17 @@ Do
         $View.StorageDomainID = $View.GetStorageDomain()
         $View.CreateView()
     }
-    else
+    elseif ($UserChoice -eq 3)
     {
+        $View = New-Object CohesityView
+        $View.Bearer = $ClusterToken
+        $View.FQDN = $ClusterFQDN
+
+        Write-Host "Please enter the path and name of the CSV:"
+        $View.CSVPath = Read-Host
+    }
+    else
+    { 
         Write-Host "You have made an invalid selection.  Choose options 1 through 3 only." -ForegroundColor Green -BackgroundColor Black
     }
-} While ($UserChoice -ne 3)
+} While ($UserChoice -ne 4)

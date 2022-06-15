@@ -109,14 +109,14 @@ class CohesityView
                   "viewParams" = @{ 
                       "objects"= @(
                         @{
-                        "id" = [Int64]$ViewID;
+                        "id" = $ViewID;
                         "name" = $_.ViewName
                         }
                     );
                     "replicationParams"= @{
                         "viewNameConfigList" = @(
                             @{
-                            "sourceViewId" = [Int64]$ViewID;
+                            "sourceViewId" = $ViewID;
                             "useSameViewName" = $false;
                             "viewName" = $_.RemoteViewName
                             }
@@ -221,7 +221,7 @@ Do
         }
         catch
         {
-            Write-Host "You have not authenticated to the cluster.  Please choose option 1 and authenticate to the cluster"
+            Write-Host "You have not authenticated to the cluster.  Please choose option 1 and authenticate to the cluster"  -ForegroundColor Green
         }
 
         Write-Host "Enter the name you would like for the views:" -ForegroundColor Green 
@@ -243,7 +243,7 @@ Do
         }
         catch
         {
-            Write-Host "You have not authenticated to the cluster.  Please choose option 1 and authenticate to the cluster"
+            Write-Host "You have not authenticated to the cluster.  Please choose option 1 and authenticate to the cluster"  -ForegroundColor Green
         }
         $View.FQDN = $ClusterFQDN
         $View.BearerToken = $ClusterToken

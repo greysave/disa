@@ -106,8 +106,6 @@ class CohesityView
             $This.ViewID = $This.GetView([String]$_.ViewName) 
             $This.ProtectView($This.ViewName + "_status", $This.PolicyID1)
             $This.ProtectView($This.ViewName + "_backup", $This.PolicyID2)
-
-            # write-host $viewID
             }
         
         }   
@@ -160,7 +158,6 @@ class CohesityView
         Write-Host $ProtectView.name "protection job successfully created" -ForegroundColor Green
     }
     
-    
     [Int]GetStorageDomain() 
     {
         $Header = @{
@@ -186,7 +183,6 @@ class CohesityView
         $Policy = $PolicyResponse | where-object name -eq $PolicyName
         Return $Policy.id
     }
-
    
     [System.Object[]]GetCluster()
     {
@@ -215,6 +211,7 @@ class CohesityView
         Return $Views.viewId
     }
 }
+
 Do
 {
     Write-Host "Select an option 1 through 4: 

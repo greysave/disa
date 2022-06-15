@@ -15,15 +15,8 @@ This app creates a user specified number of views using a user specified name pl
 
 $scriptName = 'newviews.ps1’
 
-$repoURL = 'https://raw.githubusercontent.com/greysave/disa/main'
+$repoURL = 'https://github.com/greysave/disa/blob/7e2b7dec7d9c5b85ca035e9f73d84a1146606892'
 (Invoke-WebRequest -Uri "$repoUrl/$scriptName").content | Out-File "$scriptName"; (Get-Content "$scriptName") | Set-Content "$criptName"
 # End Download Commands
 
 ```
-
-# Download Commands
-$scriptName = 'agentVersions'
-$repoURL = 'https://raw.githubusercontent.com/bseltz-cohesity/scripts/master/powershell'
-(Invoke-WebRequest -Uri "$repoUrl/$scriptName/$scriptName.ps1").content | Out-File "$scriptName.ps1"; (Get-Content "$scriptName.ps1") | Set-Content "$scriptName.ps1"
-(Invoke-WebRequest -Uri "$repoUrl/cohesity-api/cohesity-api.ps1").content | Out-File cohesity-api.ps1; (Get-Content cohesity-api.ps1) | Set-Content cohesity-api.ps1
-# End Download Commands

@@ -15,7 +15,7 @@ This app creates a user specified number of views using a user specified name pl
 
 $scriptName = 'newviews.ps1’
 
-$repoURL = '[https://raw.githubusercontent.com/greysave/disa/master/]'
+$repoURL = 'https://raw.githubusercontent.com/greysave/disa/master/'
 (Invoke-WebRequest -Uri "$$repoUrl/$scriptName.ps1").content | Out-File "$$scriptName.ps1"; (Get-Content "$$scriptName.ps1") | Set-Content "$$scriptName.ps1"
 # End Download Commands
 

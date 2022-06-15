@@ -26,16 +26,23 @@ class CohesityCluster
 class CohesityView 
 {
     [String]$ViewName
-    [INT]$Increment
+    [String]$ViewToken
+    [Int]$Increment
     [String]$FQDN
     [String]$BearerToken
     [String]$StorageDomainName
     [Int]$StorageDomainID
     [String]$ContentType = "application/json"
     [String]$CSVPath
-    [String]$PolicyName
-    [String]$PolicyID
-   
+    [String]$PolicyName1
+    [String]$PolicyID1
+    [String]$PolicyName2
+    [String]$PolicyID2
+    [int]$ViewID
+    [System.Object[]]$Cluster
+    [String]$RemoteViewName
+    
+    
 
     [Void]CreateView()
     {
@@ -66,7 +73,7 @@ class CohesityView
     [Void]CreateListView()
     {
         $CreateViewURL = "https://" + $This.FQDN + "/irisservices/api/v1/public/views"
-        $ProtectViewURL = "https://" + $This.FQDN + "/v2/data-protect/protection-groups" 
+         
         $Header = @{
             "Authorization" = "Bearer " + $This.BearerToken
             "Accept" = $This.ContentType
@@ -74,14 +81,17 @@ class CohesityView
             }
         if ((Test-Path -Path $This.CSVPath) -eq $true)
         {
-            $Cluster = $This.GetCluster()
+            $This.Cluster = $This.GetCluster()
             
             Import-Csv $This.CSVPath | ForEach-Object{
             $This.StorageDomainName = $_.StorageDomainName
             $This.StorageDomainID = $This.GetStorageDomain()
-            $This.PolicyName = $_.PolicyName
-            $This.PolicyID = $This.GetPolicy()
-            
+            $This.PolicyName1= $_.PolicyName1
+            $This.PolicyID1 = $This.GetPolicy($This.PolicyName1)
+            $This.PolicyName2 = $_.PolicyName2
+            $This.PolicyID2 = $This.GetPolicy($This.PolicyName2)
+            $This.ViewName = $_.ViewName
+            $This.RemoteViewName = $_.RemoteViewName
             $Body = @{
                 "name" = $_.ViewName
                 "viewBoxId" = $This.StorageDomainID
@@ -93,39 +103,10 @@ class CohesityView
                 }
             $Views = Invoke-RestMethod -Method 'Post' -URI $CreateViewURL -Header $Header -Body ($Body | ConvertTo-Json -Depth 99) -SkipCertificateCheck
             Write-Host $Views.name  "Created successfully" -ForegroundColor Green
-            $ViewID = $This.GetView([String]$_.ViewName) 
-            $ProtectViewBody = @{
-                "name" = $_.ViewName;
-                "policyId"=  $This.PolicyID;
-                "storageDomainId" = $This.StorageDomainID;
-                "viewBoxId" = $This.StorageDomainID;
-                "environment" = "kView";
-                "viewName" = $_.ViewName;
-                "startTime" = @{
-                    "hour" = 8;
-                    "minute" = 0;
-                    "timezone" = $Cluster.timezone
-                  };
-                  "viewParams" = @{ 
-                      "objects"= @(
-                        @{
-                        "id" = $ViewID;
-                        "name" = $_.ViewName
-                        }
-                    );
-                    "replicationParams"= @{
-                        "viewNameConfigList" = @(
-                            @{
-                            "sourceViewId" = $ViewID;
-                            "useSameViewName" = $false;
-                            "viewName" = $_.RemoteViewName
-                            }
-                        )
-                    };
-                }
-            }
-            $ProtectView = Invoke-RestMethod -Method 'Post' -URI $ProtectViewURL -Header $Header -Body ($ProtectViewBody | ConvertTo-Json -Depth 99) -SkipCertificateCheck
-            Write-Host $ProtectView.name + $_.ViewName " was successfully protected" -ForegroundColor Green
+            $This.ViewID = $This.GetView([String]$_.ViewName) 
+            $This.ProtectView($This.ViewName + "_status", $This.PolicyID1)
+            $This.ProtectView($This.ViewName + "_backup", $This.PolicyID2)
+
             # write-host $viewID
             }
         
@@ -136,6 +117,49 @@ class CohesityView
             return
         } 
     }
+    
+    [Void]ProtectView([String]$JobName, [String]$PolicyID){
+        $Header = @{
+            "Authorization" = "Bearer " + $This.BearerToken
+            "Accept" = $This.ContentType
+            "Content-Type" = $This.ContentType
+            }
+        
+        $ProtectViewURL = "https://" + $This.FQDN + "/v2/data-protect/protection-groups"
+        $ProtectViewBody = @{
+            "name" = $JobName;
+            "policyId"=  $PolicyID;
+            "storageDomainId" = $This.StorageDomainID;
+            "viewBoxId" = $This.StorageDomainID;
+            "environment" = "kView";
+            "viewName" = $This.ViewName;
+            "startTime" = @{
+                "hour" = 8;
+                "minute" = 0;
+                "timezone" = $This.Cluster.timezone
+              };
+              "viewParams" = @{ 
+                  "objects"= @(
+                    @{
+                    "id" = $This.ViewID;
+                    "name" = $This.ViewName
+                    }
+                );
+                "replicationParams"= @{
+                    "viewNameConfigList" = @(
+                        @{
+                        "sourceViewId" = $This.ViewID;
+                        "useSameViewName" = $false;
+                        "viewName" = $This.RemoteViewName
+                        }
+                    )
+                };
+            }
+        }
+        $ProtectView = Invoke-RestMethod -Method 'Post' -URI $ProtectViewURL -Header $Header -Body ($ProtectViewBody | ConvertTo-Json -Depth 99) -SkipCertificateCheck
+        Write-Host $ProtectView.name "protection job successfully created" -ForegroundColor Green
+    }
+    
     
     [Int]GetStorageDomain() 
     {
@@ -150,7 +174,7 @@ class CohesityView
         Return $SD.id
     }
 
-    [String]GetPolicy()
+    [String]GetPolicy([String]$PolicyName)
     {
         $Header = @{
             "Authorization" = "Bearer " + $This.BearerToken
@@ -159,7 +183,7 @@ class CohesityView
             } 
         $PolicyGetURL = "https://" + $This.FQDN + "/irisservices/api/v1/public/protectionPolicies"
         $PolicyResponse = Invoke-RestMethod -Method 'Get' -URI $PolicyGetURL -Header $Header -SkipCertificateCheck
-        $Policy = $PolicyResponse | where-object name -eq $This.PolicyName
+        $Policy = $PolicyResponse | where-object name -eq $PolicyName
         Return $Policy.id
     }
 
@@ -172,9 +196,9 @@ class CohesityView
             "Content-Type" = $This.ContentType
             }
         $ClusterGetURL = "https://" + $This.FQDN + "/irisservices/api/v1/public/cluster"
-        $Cluster = Invoke-RestMethod -Method 'Get' -URI $ClusterGetURL -Header $Header -SkipCertificateCheck
+        $ClusterInfo = Invoke-RestMethod -Method 'Get' -URI $ClusterGetURL -Header $Header -SkipCertificateCheck
         
-        return $Cluster
+        return $ClusterInfo
     }
 
     [Int64]GetView([String]$ViewNames) 

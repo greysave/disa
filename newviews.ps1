@@ -130,7 +130,6 @@ class CohesityView
             "storageDomainId" = $This.StorageDomainID;
             "viewBoxId" = $This.StorageDomainID;
             "environment" = "kView";
-            "viewName" = $This.ViewName;
             "startTime" = @{
                 "hour" = 8;
                 "minute" = 0;

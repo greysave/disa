@@ -117,6 +117,7 @@ class CohesityView
     }
     
     [Void]ProtectView([String]$JobName, [String]$PolicyID){
+        $LiveView = "_liveview"
         $Header = @{
             "Authorization" = "Bearer " + $This.BearerToken
             "Accept" = $This.ContentType
@@ -147,7 +148,7 @@ class CohesityView
                         @{
                         "sourceViewId" = $This.ViewID;
                         "useSameViewName" = $false;
-                        "viewName" = $This.RemoteViewName
+                        "viewName" = $This.RemoteViewName+$LiveView
                         }
                     )
                 };
